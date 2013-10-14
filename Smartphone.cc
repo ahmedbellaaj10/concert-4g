@@ -5,15 +5,39 @@
 
 class Smartphone : public cSimpleModule
 {
-  private:
-    int counter;  // Note the counter here
+    private:
+	int counter;
+	cMessage *event;
+	cMessage *messageHolder;
 
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    protected:
+	virtual void initialize();
+	virtual void handleMessage(cMessage *msg);
+
+    public:
+	Smartphone();
+	virtual ~Smartphone();
 };
 
 Define_Module(Smartphone);
+
+/*
+ *Public constructor that initializes all to null
+ */
+Smartphone::Smartphone()
+{
+    event = messageHolder = NULL;
+}
+
+/*
+ *Public destructor that cancells the message on hold and emptyes 
+ *the remaining one 
+ */
+Smartphone::~Smartphone()
+{
+    cancelAndDelete(event);
+    delete messageHolder;
+}
 
 void Smartphone::initialize()
 {
@@ -21,12 +45,17 @@ void Smartphone::initialize()
     counter = par("limit");
     WATCH(counter);
 
+    // creates a new empty event
+    event = new cMessage("event");
+    // we havent received yet any message
+    messageHolder = NULL; 
+
     // sends the initial messag
     if (par("sendMsgOnInit").boolValue() == true)
     {
-        EV << "Sending initial message\n";
-        cMessage *msg = new cMessage("tictocMsg");
-        send(msg, "out");
+	EV << "Scheduling first send to t=5.0s\n";
+	messageHolder = new cMessage("tictocMsg");
+	scheduleAt(5.0, event);
     }
 }
 
@@ -36,13 +65,22 @@ void Smartphone::handleMessage(cMessage *msg)
     counter--;
     if (counter==0)
     {
-        EV << getName() << "'s counter reached zero, deleting message\n";
-        delete msg;
+	EV << getName() << "'s counter reached zero, deleting message\n";
+	delete msg;
     }
     else
     {
-        EV << getName() << "'s counter is " << counter << ", sending back message\n";
-        send(msg, "out");
+	if (msg==event)
+	{
+	    EV << "Wait period is over, sending back message\n";
+	    send(tictocMsg, "out");
+	    tictocMsg = NULL;
+	}
+	else
+	{
+	    EV << "Message arrived, starting to wait 1 sec...\n";
+	    tictocMsg = msg;
+	    scheduleAt(simTime()+1.0, event);
+	}
     }
 }
-
