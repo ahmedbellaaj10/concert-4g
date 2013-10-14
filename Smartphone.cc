@@ -5,82 +5,54 @@
 
 class Smartphone : public cSimpleModule
 {
-    private:
-	int counter;
-	cMessage *event;
-	cMessage *messageHolder;
 
-    protected:
-	virtual void initialize();
-	virtual void handleMessage(cMessage *msg);
-
-    public:
-	Smartphone();
-	virtual ~Smartphone();
+protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
+    virtual void forwardMessage(cMessage *msg);
 };
 
 Define_Module(Smartphone);
 
-/*
- *Public constructor that initializes all to null
- */
-Smartphone::Smartphone()
-{
-    event = messageHolder = NULL;
-}
-
-/*
- *Public destructor that cancells the message on hold and emptyes 
- *the remaining one 
- */
-Smartphone::~Smartphone()
-{
-    cancelAndDelete(event);
-    delete messageHolder;
-}
-
 void Smartphone::initialize()
 {
-    // sets the counter and puts a watch on it
-    counter = par("limit");
-    WATCH(counter);
-
-    // creates a new empty event
-    event = new cMessage("event");
-    // we havent received yet any message
-    messageHolder = NULL; 
-
-    // sends the initial messag
-    if (par("sendMsgOnInit").boolValue() == true)
+    /*
+     * if this is the first node it's designated to send the first message
+     */
+    if (getIndex()==0)
     {
-	EV << "Scheduling first send to t=5.0s\n";
-	messageHolder = new cMessage("messageHolder");
-	scheduleAt(5.0, event);
+        char msgname[20];
+        sprintf(msgname, "tic-%d", getIndex());
+        cMessage *msg = new cMessage(msgname);
+        scheduleAt(0.0, msg);
     }
 }
 
+/**
+ * gets rid of the message if it's at the end of the route and forwards it
+ * if it's not.
+ */
 void Smartphone::handleMessage(cMessage *msg)
 {
-    // Increment counter and check value.
-    counter--;
-    if (counter==0)
+    if (getIndex()==3)
     {
-	EV << getName() << "'s counter reached zero, deleting message\n";
-	delete msg;
+        EV << "Message " << msg << " arrived.\n";
+        delete msg;
     }
     else
     {
-	if (msg==event)
-	{
-	    EV << "Wait period is over, sending back message\n";
-	    send(messageHolder, "out");
-	    messageHolder = NULL;
-	}
-	else
-	{
-	    EV << "Message arrived, starting to wait 1 sec...\n";
-	    messageHolder = msg;
-	    scheduleAt(simTime()+1.0, event);
-	}
+        forwardMessage(msg);
     }
+}
+
+/**
+ * forwards the message from a random output
+ */
+void Smartphone::forwardMessage(cMessage *msg)
+{
+    int n = gateSize("out"); // number of outputs
+    int k = intuniform(0,n-1); // random distribution
+
+    EV << "Forwarding message " << msg << " on port out[" << k << "]\n";
+    send(msg, "out", k);
 }
