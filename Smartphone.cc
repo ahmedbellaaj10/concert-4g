@@ -12,6 +12,11 @@ class Smartphone : public cSimpleModule
 	virtual void initialize();
 	virtual void handleMessage(cMessage *msg);
 	virtual void forwardMessage(CustomMessage *msg);
+	virtual void updateDisplay();
+
+    private:
+	long numSent;
+	long numReceived;
 };
 
 Define_Module(Smartphone);
@@ -21,6 +26,12 @@ Define_Module(Smartphone);
  */
 void Smartphone::initialize()
 {
+    // adds watches
+    numSent = 0;
+    numReceived = 0;
+    WATCH(numSent);
+    WATCH(numReceived);
+
     if (getIndex()==0)
     {
 	CustomMessage *msg = generateMessage();
@@ -41,6 +52,7 @@ void Smartphone::handleMessage(cMessage *msg)
 	// Message arrived.
 	EV << "Message " << ttmsg << " arrived after " << ttmsg->getHopCount() << " hops.\n";
 	bubble("ARRIVED, starting new one!");
+	numReceived++;
 	delete ttmsg;
 
 	// Generate another one.
@@ -48,6 +60,9 @@ void Smartphone::handleMessage(cMessage *msg)
 	CustomMessage *newmsg = generateMessage();
 	EV << newmsg << endl;
 	forwardMessage(newmsg);
+	numSent++;
+
+	if(ev.isGUI()) updateDisplay();
     }
     else
     {
@@ -91,4 +106,15 @@ CustomMessage *Smartphone::generateMessage()
     msg->setSource(src);
     msg->setDestination(dest);
     return msg;
+}
+
+/**
+ * updates labels on the simulation enviroment to
+ * see the counters
+ */
+void Smartphone::updateDisplay()
+{
+    char buf[40];
+    sprintf(buf, "rcvd: %ld sent: %ld", numReceived, numSent);
+    getDisplayString().setTagArg("t",0,buf);
 }
