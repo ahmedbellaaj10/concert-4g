@@ -18,14 +18,54 @@ network ArrayNetwork
         channel Channel extends ned.DelayChannel {
                 delay = 10ms;
         }
+        channel MiCanal extends ned.DelayChannel {
+                delay = 1000ms;
+        }
     submodules:
         tic[6]: Smartphone {
                 @display("p=74,51,ri");
         }
     connections:
         tic[0].gate++ <--> Channel <--> tic[1].gate++;
+        tic[0].gate++ <--> Channel <--> tic[1].gate++;
         tic[1].gate++ <--> Channel <--> tic[2].gate++;
         tic[1].gate++ <--> Channel <--> tic[4].gate++;
         tic[3].gate++ <--> Channel <--> tic[4].gate++;
         tic[4].gate++ <--> Channel <--> tic[5].gate++;
+        tic[5].gate++ <--> MiCanal <--> tic[1].gate++;
+
+
+}
+
+network MiNetwork
+{
+        @display("bgb=221,118");
+    types:
+        channel Channel extends ned.DelayChannel {
+                delay = 10ms;
+        }
+        channel ChannelWifiAtandt extends ned.DelayChannel {
+                delay = 10ms;
+        }
+        channel ChannelWifiVerizon extends ned.DelayChannel {
+                delay = 10ms;
+        }
+        channel ChannelCdmaAtandt extends ned.DelayChannel {
+                delay = 10ms;
+        }
+        channel ChannelCdmaVerizon extends ned.DelayChannel {
+                delay = 10ms;
+        }
+    submodules:
+        tic[6]: Smartphone {
+                @display("p=74,51,ri");
+        }
+    connections:
+        tic[0].gate++ <--> Channel <--> tic[1].gate++;
+        tic[0].gate++ <--> Channel <--> tic[1].gate++;
+        tic[1].gate++ <--> Channel <--> tic[2].gate++;
+        tic[1].gate++ <--> Channel <--> tic[4].gate++;
+        tic[3].gate++ <--> Channel <--> tic[4].gate++;
+        tic[4].gate++ <--> Channel <--> tic[5].gate++;
+        tic[5].gate++ <--> MiCanal <--> tic[1].gate++;
 }
