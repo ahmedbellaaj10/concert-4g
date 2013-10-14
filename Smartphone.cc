@@ -50,9 +50,9 @@ void Smartphone::handleMessage(cMessage *msg)
  */
 void Smartphone::forwardMessage(cMessage *msg)
 {
-    int n = gateSize("out"); // number of outputs
+    int n = gateSize("gate"); // number of outputs
     int k = intuniform(0,n-1); // random distribution
 
     EV << "Forwarding message " << msg << " on port out[" << k << "]\n";
-    send(msg, "out", k);
+    send(msg, "gate$o", k);
 }

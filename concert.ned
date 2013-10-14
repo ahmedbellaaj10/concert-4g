@@ -1,50 +1,31 @@
 package concert_4g;
 
-// ------------------MODULES ----------------//
+// ------------------ MODULES ------------------//
 simple Smartphone
 {
     parameters:
         @display("i=device/cellphone");
     gates:
-        input in[];
-        output out[];
+        inout gate[];
 }
 
 
-
-// ----------------NETWORKS ------------------//
-network BasicNetwork
-{
-    submodules:
-        tic[2]: Smartphone {
-            parameters:
-                @display("p=48,56");
-        }
-    connections:
-        tic[0].out++ --> {  delay = 10ms; } --> tic[1].in++;
-        tic[0].in++ <-- {  delay = 10ms; } <-- tic[1].out++;
-}
-
+// ------------------ NETWORKS ------------------//
 network ArrayNetwork
 {
-    @display("bgb=221,118");
+        @display("bgb=221,118");
+    types:
+        channel Channel extends ned.DelayChannel {
+                delay = 100ms;
+        }
     submodules:
         tic[6]: Smartphone {
-            @display("p=74,51,ri");
+                @display("p=74,51,ri");
         }
     connections:
-        tic[0].out++ --> {  delay = 10ms; } --> tic[1].in++;
-        tic[0].in++ <-- {  delay = 10ms; } <-- tic[1].out++;
-
-        tic[1].out++ --> {  delay = 10ms; } --> tic[2].in++;
-        tic[1].in++ <-- {  delay = 10ms; } <-- tic[2].out++;
-
-        tic[1].out++ --> {  delay = 10ms; } --> tic[4].in++;
-        tic[1].in++ <-- {  delay = 10ms; } <-- tic[4].out++;
-
-        tic[3].out++ --> {  delay = 10ms; } --> tic[4].in++;
-        tic[3].in++ <-- {  delay = 10ms; } <-- tic[4].out++;
-
-        tic[4].out++ --> {  delay = 10ms; } --> tic[5].in++;
-        tic[4].in++ <-- {  delay = 10ms; } <-- tic[5].out++;
+        tic[0].gate++ <--> Channel <--> tic[1].gate++;
+        tic[1].gate++ <--> Channel <--> tic[2].gate++;
+        tic[1].gate++ <--> Channel <--> tic[4].gate++;
+        tic[3].gate++ <--> Channel <--> tic[4].gate++;
+        tic[4].gate++ <--> Channel <--> tic[5].gate++;
 }
