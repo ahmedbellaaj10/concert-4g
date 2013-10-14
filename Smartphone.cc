@@ -54,7 +54,7 @@ void Smartphone::initialize()
     if (par("sendMsgOnInit").boolValue() == true)
     {
 	EV << "Scheduling first send to t=5.0s\n";
-	messageHolder = new cMessage("tictocMsg");
+	messageHolder = new cMessage("messageHolder");
 	scheduleAt(5.0, event);
     }
 }
@@ -73,13 +73,13 @@ void Smartphone::handleMessage(cMessage *msg)
 	if (msg==event)
 	{
 	    EV << "Wait period is over, sending back message\n";
-	    send(tictocMsg, "out");
-	    tictocMsg = NULL;
+	    send(messageHolder, "out");
+	    messageHolder = NULL;
 	}
 	else
 	{
 	    EV << "Message arrived, starting to wait 1 sec...\n";
-	    tictocMsg = msg;
+	    messageHolder = msg;
 	    scheduleAt(simTime()+1.0, event);
 	}
     }
