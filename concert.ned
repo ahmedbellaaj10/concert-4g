@@ -5,6 +5,8 @@ simple Smartphone
 {
     parameters:
         @display("i=device/cellphone");
+		bool sendMsgOnInit = default(false);
+		int limit = default(10);
     gates:
         input in;
         output out;
@@ -17,10 +19,12 @@ network BasicNetwork
     submodules:
         tic: Smartphone {
             parameters:
+		 sendMsgOnInit=true;
                 @display("p=48,56");
         }
         toc: Smartphone {
             parameters:
+		 sendMsgOnInit=false;
                 @display("p=196,56");
         }
     connections:

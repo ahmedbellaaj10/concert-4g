@@ -18,11 +18,11 @@ Define_Module(Smartphone);
 void Smartphone::initialize()
 {
     // sets the counter and puts a watch on it
-    counter = 10;
+    counter = par("limit");
     WATCH(counter);
 
     // sends the initial messag
-    if (strcmp("tic", getName()) == 0)
+    if (par("sendMsgOnInit").boolValue() == true)
     {
         EV << "Sending initial message\n";
         cMessage *msg = new cMessage("tictocMsg");
