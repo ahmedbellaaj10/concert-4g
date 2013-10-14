@@ -16,7 +16,7 @@ network ArrayNetwork
         @display("bgb=221,118");
     types:
         channel Channel extends ned.DelayChannel {
-                delay = 100ms;
+                delay = 10ms;
         }
     submodules:
         tic[6]: Smartphone {

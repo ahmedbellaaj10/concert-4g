@@ -1,4 +1,12 @@
+# ignore simulator config
 .tkenvrc
+
+# ignore compiled files
 Makefile
 out/
 concert-4g
+CustomMessage_m.cc
+CustomMessage_m.h
+
+# ignore recorded logs
+results/

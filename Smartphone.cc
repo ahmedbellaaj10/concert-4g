@@ -2,29 +2,29 @@
 #include <string.h>
 #include <omnetpp.h>
 
+// include CustomMessage header wich is generated at compile time
+#include "CustomMessage_m.h"
 
 class Smartphone : public cSimpleModule
 {
-
-protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
-    virtual void forwardMessage(cMessage *msg);
+    protected:
+	virtual CustomMessage *generateMessage();
+	virtual void initialize();
+	virtual void handleMessage(cMessage *msg);
+	virtual void forwardMessage(CustomMessage *msg);
 };
 
 Define_Module(Smartphone);
 
+/*
+ * if this is the first node it's designated to send the first message
+ */
 void Smartphone::initialize()
 {
-    /*
-     * if this is the first node it's designated to send the first message
-     */
     if (getIndex()==0)
     {
-        char msgname[20];
-        sprintf(msgname, "tic-%d", getIndex());
-        cMessage *msg = new cMessage(msgname);
-        scheduleAt(0.0, msg);
+	CustomMessage *msg = generateMessage();
+	scheduleAt(0.0, msg);
     }
 }
 
@@ -34,25 +34,61 @@ void Smartphone::initialize()
  */
 void Smartphone::handleMessage(cMessage *msg)
 {
-    if (getIndex()==3)
+    CustomMessage *ttmsg = check_and_cast<CustomMessage *>(msg);
+
+    if (ttmsg->getDestination()==getIndex())
     {
-        EV << "Message " << msg << " arrived.\n";
-        delete msg;
+	// Message arrived.
+	EV << "Message " << ttmsg << " arrived after " << ttmsg->getHopCount() << " hops.\n";
+	bubble("ARRIVED, starting new one!");
+	delete ttmsg;
+
+	// Generate another one.
+	EV << "Generating another message: ";
+	CustomMessage *newmsg = generateMessage();
+	EV << newmsg << endl;
+	forwardMessage(newmsg);
     }
     else
     {
-        forwardMessage(msg);
-    }
-}
+	// We need to forward the message.
+	forwardMessage(ttmsg);
+    }}
 
 /**
  * forwards the message from a random output
  */
-void Smartphone::forwardMessage(cMessage *msg)
+void Smartphone::forwardMessage(CustomMessage *msg)
 {
-    int n = gateSize("gate"); // number of outputs
-    int k = intuniform(0,n-1); // random distribution
+    //Increment hop count.
+    msg->setHopCount(msg->getHopCount()+1);
 
-    EV << "Forwarding message " << msg << " on port out[" << k << "]\n";
+    // Same routing as before: random gate.
+    int n = gateSize("gate");
+    int k = intuniform(0,n-1);
+
+    EV << "Forwarding message " << msg << " on gate[" << k << "]\n";
     send(msg, "gate$o", k);
+}
+
+/**
+ * sort of a constructor for the custom message class
+ */
+CustomMessage *Smartphone::generateMessage()
+{
+    // get source and destination
+    int src = getIndex();   // our module index
+    int n = size();      // module vector size
+    int dest = intuniform(0,n-2);
+    if (dest>=src) dest++;
+
+    // writes the actual message content
+    char msgname[20];
+    sprintf(msgname, "tic-%d-to-%d", src, dest);
+
+    // Create message object and set source and destination field.
+    CustomMessage *msg = new CustomMessage(msgname);
+    msg->setSource(src);
+    msg->setDestination(dest);
+    return msg;
 }
