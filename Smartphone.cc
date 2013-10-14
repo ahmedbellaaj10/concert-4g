@@ -13,15 +13,18 @@ class Smartphone : public cSimpleModule
 	virtual void handleMessage(cMessage *msg);
 	virtual void forwardMessage(CustomMessage *msg);
 	virtual void updateDisplay();
+	virtual void finish();
 
     private:
 	long numSent;
 	long numReceived;
+        cLongHistogram hopCountStats;
+        cOutVector hopCountVector;
 };
 
 Define_Module(Smartphone);
 
-/*
+/**
  * if this is the first node it's designated to send the first message
  */
 void Smartphone::initialize()
@@ -31,6 +34,10 @@ void Smartphone::initialize()
     numReceived = 0;
     WATCH(numSent);
     WATCH(numReceived);
+
+    hopCountStats.setName("hopCountStats");
+    hopCountStats.setRangeAutoUpper(0, 10, 1.5);
+    hopCountVector.setName("HopCount");
 
     if (getIndex()==0)
     {
@@ -50,9 +57,15 @@ void Smartphone::handleMessage(cMessage *msg)
     if (ttmsg->getDestination()==getIndex())
     {
 	// Message arrived.
-	EV << "Message " << ttmsg << " arrived after " << ttmsg->getHopCount() << " hops.\n";
+	int hopcount = ttmsg->getHopCount();
+	EV << "Message " << ttmsg << " arrived after " << hopcount << " hops.\n";
 	bubble("ARRIVED, starting new one!");
+
+	// Updating statistics
+        hopCountVector.record(hopcount);
+        hopCountStats.collect(hopcount);
 	numReceived++;
+
 	delete ttmsg;
 
 	// Generate another one.
@@ -117,4 +130,20 @@ void Smartphone::updateDisplay()
     char buf[40];
     sprintf(buf, "rcvd: %ld sent: %ld", numReceived, numSent);
     getDisplayString().setTagArg("t",0,buf);
+}
+
+void Smartphone::finish()
+{
+    //This function is called by OMNeT++ at the end of the simulation.
+    EV << "Sent:     " << numSent << endl;
+    EV << "Received: " << numReceived << endl;
+    EV << "Hop count, min:    " << hopCountStats.getMin() << endl;
+    EV << "Hop count, max:    " << hopCountStats.getMax() << endl;
+    EV << "Hop count, mean:   " << hopCountStats.getMean() << endl;
+    EV << "Hop count, stddev: " << hopCountStats.getStddev() << endl;
+
+    recordScalar("#sent", numSent);
+    recordScalar("#received", numReceived);
+
+    hopCountStats.recordAs("hop count");
 }
