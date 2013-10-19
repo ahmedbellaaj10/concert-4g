@@ -1,24 +1,17 @@
-package concert_4g;
+package whythehellisthisfailing;
 
 // ------------------ SIMPLE ------------------//
 simple Smartphone
 {
     parameters:
-        int srcNet = default(1);
-        int destDir = default(0);
-        int destNet = default(0);
-        bool isUpstream = true;
         @display("i=device/cellphone");
     gates:
-        inout gate[];
+        inout gate;
 }
 
 simple Antenna
 {
     parameters:
-        int srcDir = default(0);
-        int srcNet = default(0);
-        int destNet = default(1);
         @display("i=device/antennatower");
     gates:
         inout deviceGate[];
@@ -61,7 +54,7 @@ module IspNetwork
         // distributes smartphones nodes between antenas
         for i=0..sizeof(smartphone)-1 {
             // selects a random antena
-            smartphone[i].gate++ <--> antenna[intrand(numAntennas)].headerGate;
+            smartphone[i].gate <--> antenna[intrand(numAntennas)].deviceGate++;
         }
 }
 
@@ -70,6 +63,26 @@ network ConcertNetwork
 {
     double connectedness = 0.1;
     int numNodes = 100;
+    @display("i=block/network2");
+    types:
+        channel Channel extends ned.DelayChannel
+        {
+            delay = 100ms;
+        }
+    submodules:
+        AtAndTNetwork: IspNetwork {
+            @display("p=77,90");
+        }
+        VerizonNetwork: IspNetwork {
+            @display("p=276,90");
+        }
+    connections:
+}
+
+network OtheNetwork
+{
+    int numNodes = default(100);
+    @display("i=block/network2");
     types:
         channel Channel extends ned.DelayChannel
         {
