@@ -8,95 +8,47 @@
 class Smartphone : public cSimpleModule
 {
     protected:
+	cPar *intervalp;
+	cMessage *timerMsg;     // message for scheudling self calls
 	virtual CustomMessage *generateMessage();
 	virtual void initialize();
 	virtual void handleMessage(cMessage *msg);
 	virtual void forwardMessage(CustomMessage *msg);
-	virtual void updateDisplay();
-	virtual void finish();
 
-    private:
-	long numSent;
-	long numReceived;
-        cLongHistogram hopCountStats;
-        cOutVector hopCountVector;
+    public:
+	Smartphone();
+	virtual ~Smartphone();
 };
 
 Define_Module(Smartphone);
 
-/**
- * if this is the first node it's designated to send the first message
- */
+Smartphone::Smartphone(){
+    timerMsg = NULL;
+}
+
+Smartphone::~Smartphone(){
+    cancelAndDelete(timerMsg);
+}
+
 void Smartphone::initialize()
 {
-    // adds watches
-    numSent = 0;
-    numReceived = 0;
-    WATCH(numSent);
-    WATCH(numReceived);
-
-    hopCountStats.setName("hopCountStats");
-    hopCountStats.setRangeAutoUpper(0, 10, 1.5);
-    hopCountVector.setName("HopCount");
-
-    if (getIndex()==0)
-    {
-	CustomMessage *msg = generateMessage();
-	scheduleAt(0.0, msg);
-    }
+    timerMsg = new cMessage("timer");
+    intervalp = &par("interval");
+    scheduleAt(simTime() + intervalp->doubleValue(), timerMsg);
 }
 
 /**
- * gets rid of the message if it's at the end of the route and forwards it
- * if it's not.
+ * Checks if the message is the timer to send another package.
+ * If it is it sends a CustomMessage, otherwise it means the 
+ * one we sent has ben returned so we do nothing.
  */
 void Smartphone::handleMessage(cMessage *msg)
-{
-    CustomMessage *ttmsg = check_and_cast<CustomMessage *>(msg);
-
-    if (ttmsg->getDestination()==getIndex())
-    {
-	// Message arrived.
-	int hopcount = ttmsg->getHopCount();
-	EV << "Message " << ttmsg << " arrived after " << hopcount << " hops.\n";
-	bubble("ARRIVED, starting new one!");
-
-	// Updating statistics
-        hopCountVector.record(hopcount);
-        hopCountStats.collect(hopcount);
-	numReceived++;
-
-	delete ttmsg;
-
-	// Generate another one.
-	EV << "Generating another message: ";
-	CustomMessage *newmsg = generateMessage();
-	EV << newmsg << endl;
-	forwardMessage(newmsg);
-	numSent++;
-
-	if(ev.isGUI()) updateDisplay();
+    if(msg==timerMsg){
+	CustomMessage *newmsg = generateMessage(); // Generates a new message
+	send(newmsg, "gate"); // Sends the fresh generated message.
+	simtime_t delay = par("interval"); // Gets another delay time
+	scheduleAt(simTime() + intervalp->doubleValue(), timerMsg);  // Scheudles a new event.
     }
-    else
-    {
-	// We need to forward the message.
-	forwardMessage(ttmsg);
-    }}
-
-/**
- * forwards the message from a random output
- */
-void Smartphone::forwardMessage(CustomMessage *msg)
-{
-    //Increment hop count.
-    msg->setHopCount(msg->getHopCount()+1);
-
-    // Same routing as before: random gate.
-    int n = gateSize("gate");
-    int k = intuniform(0,n-1);
-
-    EV << "Forwarding message " << msg << " on gate[" << k << "]\n";
-    send(msg, "gate$o", k);
 }
 
 /**
@@ -105,45 +57,23 @@ void Smartphone::forwardMessage(CustomMessage *msg)
 CustomMessage *Smartphone::generateMessage()
 {
     // get source and destination
-    int src = getIndex();   // our module index
-    int n = size();      // module vector size
-    int dest = intuniform(0,n-2);
-    if (dest>=src) dest++;
+    int srcDevice = getIndex();
+    int srcNetwork = 1;
+    int destDevice = 0;
+    int destNetwork = 0;
+    bool isUpstream = true;
 
     // writes the actual message content
-    char msgname[20];
-    sprintf(msgname, "tic-%d-to-%d", src, dest);
+    char msgname[16];
+    sprintf(msgname, "upstream message", src, dest);
 
     // Create message object and set source and destination field.
     CustomMessage *msg = new CustomMessage(msgname);
-    msg->setSource(src);
-    msg->setDestination(dest);
+    msg->setSourceIndex(srcDevice);
+    msg->setSourceNetwork(DestinationNetwork(srcNetwork);
+    msg->setDestinationIndex(destDevice);
+    msg->setDestinationNetwork(destNetwork);
+    msg->setIsUpstream(isUpstream);
+
     return msg;
-}
-
-/**
- * updates labels on the simulation enviroment to
- * see the counters
- */
-void Smartphone::updateDisplay()
-{
-    char buf[40];
-    sprintf(buf, "rcvd: %ld sent: %ld", numReceived, numSent);
-    getDisplayString().setTagArg("t",0,buf);
-}
-
-void Smartphone::finish()
-{
-    //This function is called by OMNeT++ at the end of the simulation.
-    EV << "Sent:     " << numSent << endl;
-    EV << "Received: " << numReceived << endl;
-    EV << "Hop count, min:    " << hopCountStats.getMin() << endl;
-    EV << "Hop count, max:    " << hopCountStats.getMax() << endl;
-    EV << "Hop count, mean:   " << hopCountStats.getMean() << endl;
-    EV << "Hop count, stddev: " << hopCountStats.getStddev() << endl;
-
-    recordScalar("#sent", numSent);
-    recordScalar("#received", numReceived);
-
-    hopCountStats.recordAs("hop count");
 }
