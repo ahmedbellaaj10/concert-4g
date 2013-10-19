@@ -5,4 +5,5 @@ packet CustomMessage
     int destinationNetwork;
     int sourceIndex;
     int destinationIndex;
+    bool isUpstream;
 }
