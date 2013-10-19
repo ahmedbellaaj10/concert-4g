@@ -4,6 +4,10 @@ package concert_4g;
 simple Smartphone
 {
     parameters:
+        int srcNet = default(1);
+        int destDir = default(0);
+        int destNet = default(0);
+        bool isUpstream = true;
         @display("i=device/cellphone");
     gates:
         inout gate[];
@@ -12,6 +16,9 @@ simple Smartphone
 simple Antenna
 {
     parameters:
+        int srcDir = default(0);
+        int srcNet = default(0);
+        int destNet = default(1);
         @display("i=device/antennatower");
     gates:
         inout deviceGate[];
@@ -28,13 +35,14 @@ simple Header
 
 
 // ------------------ MODULES ------------------//
-module IspNetwork 
+module IspNetwork
 {
     parameters:
         int networkAddress; // positive numbes 0, 1, 2
         int numHosts = default(10);
         int numAntennas = default(2);
         int selAnt;
+        @display("i=block/network");
     submodules:
         header: Header {
             @display("p=60,71");
@@ -58,19 +66,21 @@ module IspNetwork
 }
 
 // ------------------ NETWORKS ------------------//
-network GrafoCompleto
+network ConcertNetwork
 {
-        double connectedness = 0.1;
-        int numNodes = 100;
+    double connectedness = 0.1;
+    int numNodes = 100;
     types:
         channel Channel extends ned.DelayChannel
         {
             delay = 100ms;
         }
     submodules:
-        tic[numNodes]: Smartphone;
-    connections:
-        for i=1..sizeof(tic)-1, for j=0..i-1, if normal(0,1)<connectedness {
-            tic[i].gate++ <--> Channel <--> tic[j].gate++;
+        AtAndTNetwork: IspNetwork {
+            @display("p=77,90");
         }
+        VerizonNetwork: IspNetwork {
+            @display("p=276,90");
+        }
+    connections:
 }
