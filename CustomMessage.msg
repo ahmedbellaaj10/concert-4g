@@ -1,7 +1,8 @@
-message CustomMessage
+// Length between 1 and 524280
+packet CustomMessage
 {
-    int source;
-    int destination;
-    int hopCount = 0;
-    int sizeInBits; // between 1 and 524280
+    int sourceNetwork;
+    int destinationNetwork;
+    int sourceIndex;
+    int destinationIndex;
 }
