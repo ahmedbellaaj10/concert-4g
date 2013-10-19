@@ -1,6 +1,6 @@
 package concert_4g;
 
-// ------------------ MODULES ------------------//
+// ------------------ SIMPLE ------------------//
 simple Smartphone
 {
     parameters:
@@ -9,63 +9,66 @@ simple Smartphone
         inout gate[];
 }
 
-
-// ------------------ NETWORKS ------------------//
-network ArrayNetwork
+simple Antenna
 {
-        @display("bgb=221,118");
-    types:
-        channel Channel extends ned.DelayChannel {
-                delay = 10ms;
-        }
-        channel MiCanal extends ned.DelayChannel {
-                delay = 1000ms;
-        }
-    submodules:
-        tic[6]: Smartphone {
-                @display("p=74,51,ri");
-        }
-    connections:
-        tic[0].gate++ <--> Channel <--> tic[1].gate++;
-        tic[0].gate++ <--> Channel <--> tic[1].gate++;
-        tic[1].gate++ <--> Channel <--> tic[2].gate++;
-        tic[1].gate++ <--> Channel <--> tic[4].gate++;
-        tic[3].gate++ <--> Channel <--> tic[4].gate++;
-        tic[4].gate++ <--> Channel <--> tic[5].gate++;
-        tic[5].gate++ <--> MiCanal <--> tic[1].gate++;
-
-
+    @display("i=device/antennatower");
+    gates:
+        inout deviceGate[];
+        inout headerGate;
 }
 
-network MiNetwork
+simple Header
 {
-        @display("bgb=221,118");
-    types:
-        channel Channel extends ned.DelayChannel {
-                delay = 10ms;
-        }
-        channel ChannelWifiAtandt extends ned.DelayChannel {
-                delay = 10ms;
-        }
-        channel ChannelWifiVerizon extends ned.DelayChannel {
-                delay = 10ms;
-        }
-        channel ChannelCdmaAtandt extends ned.DelayChannel {
-                delay = 10ms;
-        }
-        channel ChannelCdmaVerizon extends ned.DelayChannel {
-                delay = 10ms;
-        }
+    @display("i=misc/cloud");
+    gates:
+        inout antennaGate[];
+}
+
+
+// ------------------ MODULES ------------------//
+module IspNetwork 
+{
+parameters:
+    int networkAddress; // positive numbes 0, 1, 2
+    int numHosts = default(10);
+    int numAntenas = default(2);
     submodules:
-        tic[6]: Smartphone {
-                @display("p=74,51,ri");
+        header: Header {
+            @display("p=60,71");
+        }
+        antenna[]: Antenna {
+            @display("p=60,144");
+        }
+        smartphone[]: Smartphone {
+            @display("p=59,219");
         }
     connections:
-        tic[0].gate++ <--> Channel <--> tic[1].gate++;
-        tic[0].gate++ <--> Channel <--> tic[1].gate++;
-        tic[1].gate++ <--> Channel <--> tic[2].gate++;
-        tic[1].gate++ <--> Channel <--> tic[4].gate++;
-        tic[3].gate++ <--> Channel <--> tic[4].gate++;
-        tic[4].gate++ <--> Channel <--> tic[5].gate++;
-        tic[5].gate++ <--> MiCanal <--> tic[1].gate++;
+	// connects antenas to the header
+	for i=0..sizeof(antenna)-1 {
+	    header.antenaGate++ <--> antenna[i].headerGate;
+	}
+	// distributes smartphones nodes between antenas
+	for i=0..sizeof(smartphone)-1 {
+            // selects a random antena
+	    int selAnt = intrand(sizeof(antenna)); 
+	    smartphone[i].gate++ <--> antenna[selAnt].headerGate;
+	}
+}
+
+// ------------------ NETWORKS ------------------//
+network GrafoCompleto
+{
+    double connectedness = 0.1;
+    int numNodes = 100;
+    types:
+        channel Channel extends ned.DelayChannel
+        {
+            delay = 100ms;
+        }
+    submodules:
+        tic[numNodes]: Smartphone;
+    connections:
+        for i=1..sizeof(tic)-1, for j=0..i-1, if normal(0,1)<connectedness {
+            tic[i].gate++ <--> Channel <--> tic[j].gate++;
+        }
 }
