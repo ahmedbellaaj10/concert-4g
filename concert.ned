@@ -11,7 +11,8 @@ simple Smartphone
 
 simple Antenna
 {
-    @display("i=device/antennatower");
+    parameters:
+        @display("i=device/antennatower");
     gates:
         inout deviceGate[];
         inout headerGate;
@@ -19,7 +20,8 @@ simple Antenna
 
 simple Header
 {
-    @display("i=misc/cloud");
+    parameters:
+        @display("i=misc/cloud");
     gates:
         inout antennaGate[];
 }
@@ -28,38 +30,38 @@ simple Header
 // ------------------ MODULES ------------------//
 module IspNetwork 
 {
-parameters:
-    int networkAddress; // positive numbes 0, 1, 2
-    int numHosts = default(10);
-    int numAntenas = default(2);
+    parameters:
+        int networkAddress; // positive numbes 0, 1, 2
+        int numHosts = default(10);
+        int numAntennas = default(2);
+        int selAnt;
     submodules:
         header: Header {
             @display("p=60,71");
         }
-        antenna[]: Antenna {
+        antenna[numAntennas]: Antenna {
             @display("p=60,144");
         }
-        smartphone[]: Smartphone {
+        smartphone[numHosts]: Smartphone {
             @display("p=59,219");
         }
     connections:
-	// connects antenas to the header
-	for i=0..sizeof(antenna)-1 {
-	    header.antenaGate++ <--> antenna[i].headerGate;
-	}
-	// distributes smartphones nodes between antenas
-	for i=0..sizeof(smartphone)-1 {
+        // connects antenas to the header
+        for i=0..sizeof(antenna)-1 {
+            antenna[i].headerGate <--> header.antennaGate++;
+        }
+        // distributes smartphones nodes between antenas
+        for i=0..sizeof(smartphone)-1 {
             // selects a random antena
-	    int selAnt = intrand(sizeof(antenna)); 
-	    smartphone[i].gate++ <--> antenna[selAnt].headerGate;
-	}
+            smartphone[i].gate++ <--> antenna[intrand(numAntennas)].headerGate;
+        }
 }
 
 // ------------------ NETWORKS ------------------//
 network GrafoCompleto
 {
-    double connectedness = 0.1;
-    int numNodes = 100;
+        double connectedness = 0.1;
+        int numNodes = 100;
     types:
         channel Channel extends ned.DelayChannel
         {
