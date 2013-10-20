@@ -7,7 +7,7 @@ simple Smartphone
         int interval = default(intuniform(1, 10));
         @display("i=device/cellphone");
     gates:
-        inout gate;
+        inout antennaGate;
 }
 
 simple Antenna
@@ -54,7 +54,7 @@ module IspNetwork
         // distributes smartphones nodes between antenas
         for i=0..sizeof(smartphone)-1 {
             // selects a random antena
-            smartphone[i].gate <--> antenna[intuniform(0, numAntennas-1)].deviceGate++;
+            smartphone[i].antennaGate <--> antenna[intuniform(0, numAntennas-1)].deviceGate++;
         }
 
 }

@@ -21,8 +21,8 @@ void Header::handleMessage(cMessage *msg)
 {
     CustomMessage *ttmsg = check_and_cast<CustomMessage *>(msg);
     CustomMessage *newmsg = generateMessage(ttmsg);
-    int numGate = msg->getArrivalGateId();
-    send(newmsg, "gate$o", numGate);
+    int numGate = msg->getArrivalGate()->getIndex();
+    send(newmsg, "antennaGate$o", numGate);
 }
 
 /**

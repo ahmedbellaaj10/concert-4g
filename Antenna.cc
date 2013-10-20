@@ -26,16 +26,17 @@ void Antenna::handleMessage(cMessage *msg)
 {
     CustomMessage *ttmsg = check_and_cast<CustomMessage *>(msg);
 
-
     // If the direction is smartphone-->header
     if (ttmsg->getIsUpstream())
     {
-        send(msg,"headerGate");
+        int numGate = ttmsg->getArrivalGate()->getIndex();
+        ttmsg->setSourceIndex(numGate);
+        send(ttmsg,"headerGate$o");
     }
     // If the direction is header-->smartphone
     else
     {
         int numSmartphone = ttmsg->getDestinationIndex();
-        send(msg,"smartphoneGate$o", numSmartphone);
+        send(ttmsg,"deviceGate$o", numSmartphone);
     }
 }

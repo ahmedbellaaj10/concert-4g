@@ -71,7 +71,7 @@ void Smartphone::handleMessage(cMessage *msg)
     if(msg==timerMsg){
         // Sends a new message
         CustomMessage *newmsg = generateMessage();
-        send(newmsg, "gate");
+        send(newmsg, "antennaGate$o");
 
         // Scheudles a new event
         intervalp = &par("interval");
