@@ -13,7 +13,6 @@ protected:
     virtual CustomMessage *generateMessage();
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
-    virtual void forwardMessage(CustomMessage *msg);
 
 public:
     Smartphone();
@@ -93,7 +92,7 @@ CustomMessage *Smartphone::generateMessage()
     // Create message object and set source and destination field.
     CustomMessage *msg = new CustomMessage(msgname);
     msg->setSourceIndex(srcDevice);
-    msg->setSourceNetwork(DestinationNetwork);
+    msg->setSourceNetwork(destNetwork);
     msg->setDestinationIndex(destDevice);
     msg->setDestinationNetwork(destNetwork);
     msg->setIsUpstream(isUpstream);

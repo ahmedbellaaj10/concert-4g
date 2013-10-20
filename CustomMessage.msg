@@ -1,5 +1,4 @@
-// Length between 1 and 524280
-packet CustomMessage
+message CustomMessage
 {
     int sourceNetwork;
     int destinationNetwork;
