@@ -2,7 +2,7 @@
 #include <string.h>
 #include <omnetpp.h>
 
-#include "CustomMessage_m.h"
+#include "CustomPacket_m.h"
 
 
 /**
@@ -24,19 +24,19 @@ Define_Module(Antenna);
  */
 void Antenna::handleMessage(cMessage *msg)
 {
-    CustomMessage *ttmsg = check_and_cast<CustomMessage *>(msg);
+    CustomPacket *ttmsg = check_and_cast<CustomPacket *>(msg);
 
     // If the direction is smartphone-->header
     if (ttmsg->getIsUpstream())
     {
         int numGate = ttmsg->getArrivalGate()->getIndex();
-        ttmsg->setSourceIndex(numGate);
+        ttmsg->setSourceAddress(numGate);
         send(ttmsg,"headerGate$o");
     }
     // If the direction is header-->smartphone
     else
     {
-        int numSmartphone = ttmsg->getDestinationIndex();
+        int numSmartphone = ttmsg->getSourceAddress();
         send(ttmsg,"deviceGate$o", numSmartphone);
     }
 }

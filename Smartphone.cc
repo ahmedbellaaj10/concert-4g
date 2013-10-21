@@ -2,15 +2,15 @@
 #include <string.h>
 #include <omnetpp.h>
 
-// include CustomMessage header wich is generated at compile time
-#include "CustomMessage_m.h"
+// include CustomPacket header wich is generated at compile time
+#include "CustomPacket_m.h"
 
 class Smartphone : public cSimpleModule
 {
 protected:
     cPar *intervalp;
     cMessage *timerMsg;     // message for scheudling self calls
-    virtual CustomMessage *generateMessage();
+    virtual CustomPacket *generateMessage();
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
 
@@ -20,10 +20,6 @@ public:
 
 private:
     int srcDevice;
-    int srcNetwork;
-    int destDevice;
-    int destNetwork;
-    bool isUpstream;
 };
 
 Define_Module(Smartphone);
@@ -48,54 +44,48 @@ Smartphone::~Smartphone(){
  */
 void Smartphone::initialize()
 {
-    // kickstarts the event timing
+    // Kickstarts the event timing
     timerMsg = new cMessage("timer");
     intervalp = &par("interval");
     scheduleAt(simTime() + intervalp->doubleValue(), timerMsg);
 
-    // Since routing information will be static it can be initialized here
+    // Since routing information will be final it can be initialized here
     srcDevice = getIndex();
-    srcNetwork = NULL;
-    destDevice = 0;
-    destNetwork = 0;
-    isUpstream = true;
 }
 
 /**
  * Checks if the message is the timer to send another package.
- * If it is it sends a CustomMessage, otherwise it means the 
+ * If it is it sends a CustomPacket, otherwise it means the
  * one we sent has ben returned so we do nothing.
  */
 void Smartphone::handleMessage(cMessage *msg)
 {
-    if(msg==timerMsg){
+    if(msg->isSelfMessage()){
         // Sends a new message
-        CustomMessage *newmsg = generateMessage();
+        CustomPacket *newmsg = generateMessage();
         send(newmsg, "antennaGate$o");
 
         // Scheudles a new event
         intervalp = &par("interval");
         scheduleAt(simTime() + intervalp->doubleValue(), timerMsg);
+        // TODO: measure packets/seconds
+    }
+    else{
+        // TODO: delay measure
+        delete(msg);
     }
 }
 
 /**
  * Sort of a factory for the custom message class. Uses static routing data to
- * instantiate a new CustomMessage object and returns it.
+ * instantiate a new CustomPacket object and returns it.
  */
-CustomMessage *Smartphone::generateMessage()
+CustomPacket *Smartphone::generateMessage()
 {
-    // writes the actual message content
-    char msgname[16];
-    sprintf(msgname, "upstream message");
-
-    // Create message object and set source and destination field.
-    CustomMessage *msg = new CustomMessage(msgname);
-    msg->setSourceIndex(srcDevice);
-    msg->setSourceNetwork(destNetwork);
-    msg->setDestinationIndex(destDevice);
-    msg->setDestinationNetwork(destNetwork);
-    msg->setIsUpstream(isUpstream);
+    // Create message object and set source and direction fields.
+    CustomPacket *msg = new CustomPacket(NULL);
+    msg->setSourceAddress(srcDevice);
+    msg->setIsUpstream(true);
 
     return msg;
 }

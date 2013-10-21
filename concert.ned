@@ -48,7 +48,6 @@ channel WirelessChannel extends ned.DatarateChannel
 module IspNetwork
 {
     parameters:
-        int networkAddress; // positive numbes 0, 1, 2
         int numHosts = default(10);
         int numAntennas = default(2);
         @display("i=block/network");
