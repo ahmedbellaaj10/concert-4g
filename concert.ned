@@ -27,6 +27,22 @@ simple Header
         inout antennaGate[];
 }
 
+// ------------------ CHANNELS ------------------//
+channel FibberChannel extends ned.DatarateChannel
+{
+    datarate = 1Gbps;
+    delay = 100us;
+    @display("ls=orange,2");
+}
+
+// Wifi and 4G channels have similar bandwidth and differs in range.
+channel WirelessChannel extends ned.DatarateChannel
+{
+    // Average between 4G upstream (75Mbps) and downstream (300Mbps).
+    datarate = 180Mbps;
+    delay = 100us;
+    @display("ls=blue,2,da");
+}
 
 // ------------------ MODULES ------------------//
 module IspNetwork
@@ -49,43 +65,19 @@ module IspNetwork
     connections:
         // connects antenas to the header
         for i=0..sizeof(antenna)-1 {
-            antenna[i].headerGate <--> header.antennaGate++;
+            antenna[i].headerGate <--> FibberChannel <--> header.antennaGate++;
         }
         // distributes smartphones nodes between antenas
         for i=0..sizeof(smartphone)-1 {
-            // selects a random antena
-            smartphone[i].antennaGate <--> antenna[intuniform(0, numAntennas-1)].deviceGate++;
+            smartphone[i].antennaGate <--> WirelessChannel <--> antenna[intuniform(0, numAntennas-1)].deviceGate++;
         }
-
 }
 
 // ------------------ NETWORKS ------------------//
 network ConcertNetwork
 {
     parameters:
-        double connectedness = 0.1;
-        int numNodes = 100;
         @display("i=block/network2");
-    submodules:
-        AtAndTNetwork: IspNetwork {
-            @display("p=77,90");
-        }
-        VerizonNetwork: IspNetwork {
-            @display("p=276,90");
-        }
-    connections:
-}
-
-network OtheNetwork
-{
-    parameters:
-        int numNodes = default(100);
-        @display("i=block/network2");
-    types:
-        channel Channel extends ned.DelayChannel
-        {
-            delay = 100ms;
-        }
     submodules:
         AtAndTNetwork: IspNetwork {
             @display("p=77,90");
